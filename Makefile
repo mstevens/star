@@ -1,50 +1,55 @@
-PARROT_VER = 2.11.0
+PARROT_VER = 3.11.0
 PARROT_REL = devel/$(PARROT_VER)
-RAKUDO_VER = 2010.12
+NQP_VER    = 2012.01
+RAKUDO_VER = 2012.01
 
 DISTDIR = rakudo-star-$(VERSION)
+BUILD_DIR   = $(DISTDIR)/build
 
 PARROT      = parrot-$(PARROT_VER)
 PARROT_TGZ  = $(PARROT).tar.gz
 PARROT_DIR  = $(DISTDIR)/$(PARROT)
 
-RAKUDO_DIR  = $(DISTDIR)/rakudo
-RAKUDO_TGZ  = rakudo-$(RAKUDO_VER).tar.gz
-BUILD_DIR   = $(DISTDIR)/build
-MODULES_DIR = $(DISTDIR)/modules
+NQP         = nqp-$(NQP_VER)
+NQP_TGZ     = $(NQP).tar.gz
+NQP_DIR     = $(DISTDIR)/$(NQP)
+
+RAKUDO      = rakudo-$(RAKUDO_VER)
+RAKUDO_TGZ  = $(RAKUDO).tar.gz
+RAKUDO_DIR  = $(DISTDIR)/$(RAKUDO)
+
 
 ## If you add a module here, don't forget to update MODULES
 ## in skel/build/Makefile.in to actually install it
+MODULES_DIR = $(DISTDIR)/modules
 MODULES = \
-  http://github.com/masak/ufo \
-  http://github.com/jnthn/zavolaj \
-  http://github.com/jnthn/blizkost \
-  http://github.com/mberends/MiniDBI \
-  http://github.com/masak/xml-writer \
-  http://github.com/moritz/svg \
-  http://github.com/moritz/svg-plot \
-  http://github.com/moritz/Math-RungeKutta \
-  http://github.com/moritz/Math-Model \
-  http://github.com/mathw/form \
-  http://github.com/tadzik/perl6-Term-ANSIColor \
-  http://github.com/arnsholt/Algorithm-Viterbi \
-  http://git.gitorious.org/http-daemon/mainline \
-  http://github.com/jnthn/test-mock \
-  http://github.com/ingydotnet/yaml-pm6 \
-  http://github.com/moritz/json \
-  http://github.com/snarkyboojum/Perl6-MIME-Base64 \
-  http://github.com/cosimo/perl6-lwp-simple \
-  http://github.com/cosimo/perl6-digest-md5 \
-  http://github.com/tadzik/perl6-File-Tools \
-  http://github.com/tadzik/perl6-Module-Tools \
-  http://github.com/tadzik/perl6-Config-INI
-
+  git://github.com/masak/ufo \
+  git://github.com/jnthn/zavolaj \
+  git://github.com/masak/xml-writer \
+  git://github.com/moritz/svg \
+  git://github.com/moritz/Math-RungeKutta \
+  git://github.com/moritz/svg-plot \
+  git://github.com/moritz/Math-Model \
+  git://github.com/tadzik/perl6-Term-ANSIColor \
+  git://github.com/jnthn/test-mock \
+  git://github.com/perlpilot/Grammar-Profiler-Simple \
+  git://github.com/jnthn/grammar-debugger \
+  git://github.com/moritz/json \
+  git://github.com/snarkyboojum/Perl6-MIME-Base64 \
+  git://github.com/cosimo/perl6-digest-md5 \
+  git://github.com/tadzik/perl6-File-Tools \
+  git://github.com/tadzik/perl6-Config-INI \
+  git://github.com/tadzik/panda \
+  git://github.com/supernovus/perl6-http-status \
+  git://github.com/supernovus/perl6-http-easy \
+  git://github.com/tadzik/Bailador \
+  git://github.com/mberends/MiniDBI \
 
 DISTTARGETS = \
   $(PARROT_DIR) \
+  $(NQP_DIR) \
   $(RAKUDO_DIR) \
   $(MODULES_DIR) \
-  $(BUILD_DIR)/PARROT_REVISION \
   star-patches \
   $(DISTDIR)/MANIFEST \
 
@@ -56,22 +61,26 @@ version_check:
 always:
 
 $(DISTDIR): always
-	cp -av skel $(DISTDIR)
+	mkdir -p $(DISTDIR)
+	cp -av skel/. $(DISTDIR)
 
 $(PARROT_DIR): $(PARROT_TGZ)
 	tar -C $(DISTDIR) -xvzf $(PARROT_TGZ)
+
 $(PARROT_TGZ):
 	wget http://ftp.parrot.org/releases/$(PARROT_REL)/$(PARROT_TGZ)
 
+$(NQP_DIR): $(NQP_TGZ)
+	tar -C $(DISTDIR) -xvzf $(NQP_TGZ)
+
+$(NQP_TGZ):
+	wget --no-check-certificate https://github.com/downloads/perl6/nqp/$(NQP_TGZ)
+
 $(RAKUDO_DIR): $(RAKUDO_TGZ)
 	tar -C $(DISTDIR) -xvzf $(RAKUDO_TGZ)
-	mv $(DISTDIR)/rakudo-$(RAKUDO_VER) $(RAKUDO_DIR)
 	
 $(RAKUDO_TGZ):
 	wget --no-check-certificate https://github.com/downloads/rakudo/rakudo/$(RAKUDO_TGZ)
-
-$(BUILD_DIR)/PARROT_REVISION: $(RAKUDO_DIR) $(RAKUDO_DIR)/build/PARROT_REVISION
-	cp $(RAKUDO_DIR)/build/PARROT_REVISION $(BUILD_DIR)
 
 $(MODULES_DIR): always
 	mkdir -p $(MODULES_DIR)
@@ -87,12 +96,9 @@ $(DISTDIR)/MANIFEST:
 	## add the two dot-files from Parrot MANIFEST
 	echo "$(PARROT)/.gitignore" >>$(DISTDIR)/MANIFEST
 	echo "$(PARROT)/tools/dev/.gdbinit" >>$(DISTDIR)/MANIFEST
-	## add the .gitignore from blizkost holding an otherwise empty dir
-	echo "modules/blizkost/dynext/.gitignore" >>$(DISTDIR)/MANIFEST
 
 release: dist tarball
 
 tarball:
 	perl -ne 'print "$(DISTDIR)/$$_"' $(DISTDIR)/MANIFEST |\
 	    tar -zcv -T - -f $(DISTDIR).tar.gz
-	

@@ -1,6 +1,10 @@
 # Copyright (C) 2006-2010, The Perl Foundation.
 # $Id$
 
+PARROT = parrot-3.11.0
+NQP    = nqp-2012.01
+RAKUDO = rakudo-2012.01
+
 PARROT_ARGS      =
 
 # values from parrot_config
@@ -30,7 +34,7 @@ POD2MAN       = @pod2man@
 
 # locations of parrot resources
 PARROT           = $(PARROT_BIN_DIR)/parrot$(EXE)
-NQP_EXE          = $(PARROT_BIN_DIR)/parrot-nqp$(EXE)
+NQP_EXE          = $(PARROT_BIN_DIR)/nqp$(EXE)
 PBC_TO_EXE       = $(PARROT_BIN_DIR)/pbc_to_exe$(EXE)
 PARROT_CONFIG    = $(PARROT_BIN_DIR)/parrot_config$(EXE)
 PARROT_TOOLS_DIR = $(PARROT_LIB_DIR)/tools
@@ -41,50 +45,43 @@ PMC2C_INCLUDES   = --include src/pmc --include $(PARROT_SRC_DIR) --include $(PAR
 CINCLUDES        = -I$(PARROT_INCLUDE_DIR) -I$(PARROT_INCLUDE_DIR)/pmc
 LINKARGS         = $(LDFLAGS) $(LD_LOAD_FLAGS) $(LIBPARROT) @libs@ @icu_shared@
 
-# rakudo directories
-DYNEXT_DIR     = dynext
-PMC_DIR        = src/pmc
-OPS_DIR        = src/ops
-PERL6_LANG_DIR = $(PARROT_LIB_DIR)/languages/perl6
-MANDIR         = @mandir@
-DOCDIR         = @prefix@/share/doc
-
 PERL6_EXE      = perl6$(EXE)
 PERL6_LANG_DIR = $(PARROT_LIB_DIR)/languages/perl6
 
 MODULES = \
   modules/zavolaj \
-  modules/MiniDBI \
   modules/xml-writer \
   modules/svg \
   modules/svg-plot \
   modules/Math-RungeKutta \
   modules/Math-Model \
-  modules/mainline \
-  modules/perl6-Config-INI \
   modules/perl6-Term-ANSIColor \
-  modules/Algorithm-Viterbi \
   modules/test-mock \
+  modules/Grammar-Profiler-Simple \
+  modules/grammar-debugger \
   modules/Perl6-MIME-Base64 \
   modules/perl6-lwp-simple \
   modules/json \
-  modules/yaml-pm6 \
-  modules/form \
   modules/perl6-digest-md5 \
   modules/perl6-File-Tools \
-  modules/perl6-Module-Tools
+  modules/panda \
+  modules/perl6-Config-INI \
+  modules/perl6-http-status \
+  modules/perl6-http-easy \
+  modules/Bailador \
+  modules/MiniDBI
 
 all: rakudo
 
-rakudo: rakudo/$(PERL6_EXE)
-rakudo/$(PERL6_EXE):
-	cd rakudo && $(PERL) Configure.pl --parrot-config=$(PARROT_CONFIG) && $(MAKE)
-rakudo-test: rakudo/perl6
-	cd rakudo && $(MAKE) test
-rakudo-spectest: rakudo/perl6
-	cd rakudo && $(MAKE) spectest
+rakudo: $(RAKUDO)/$(PERL6_EXE)
+$(RAKUDO)/$(PERL6_EXE):
+	cd $(RAKUDO) && $(PERL) Configure.pl --with-nqp=$(NQP_EXE) && $(MAKE)
+rakudo-test: rakudo
+	cd $(RAKUDO) && $(MAKE) test
+rakudo-spectest: rakudo
+	cd $(RAKUDO) && $(MAKE) spectest
 rakudo-install: rakudo
-	cd rakudo && $(MAKE) install
+	cd $(RAKUDO) && $(MAKE) install
 	@win32_libparrot_copy@
 	$(CP) $(DESTDIR)$(PARROT_BIN_DIR)/$(PERL6_EXE) .
 	$(CHMOD) 755 $(PERL6_EXE)
@@ -93,12 +90,13 @@ modules-install: rakudo
 	@echo "Installing 'ufo'"
 	$(CP)    modules/ufo/bin/ufo $(DESTDIR)$(PARROT_BIN_DIR)/ufo
 	$(CHMOD) 755                 $(DESTDIR)$(PARROT_BIN_DIR)/ufo
-	$(PERL) build/module-install.pl $(DESTDIR)$(PARROT_BIN_DIR)/$(PERL6_EXE) $(DESTDIR)$(PERL6_LANG_DIR)/lib $(MODULES)
-
-blizkost:
-	cd modules/blizkost && $(PERL) Configure.pl --parrot-config=$(PARROT_CONFIG) && $(MAKE)
-blizkost-install: blizkost
-	cd modules/blizkost && $(MAKE) install
+	$(PERL) tools/build/module-install.pl $(DESTDIR)$(PARROT_BIN_DIR)/$(PERL6_EXE) $(DESTDIR)$(PERL6_LANG_DIR)/lib $(MODULES)
+	@echo "Installing 'ufobuilder'"
+	$(CP)    modules/panda/bin/ufobuilder $(DESTDIR)$(PARROT_BIN_DIR)/ufobuilder
+	$(CHMOD) 755                         $(DESTDIR)$(PARROT_BIN_DIR)/ufobuilder
+	@echo "Installing 'panda'"
+	$(CP)    modules/panda/bin/panda $(DESTDIR)$(PARROT_BIN_DIR)/panda
+	$(CHMOD) 755                    $(DESTDIR)$(PARROT_BIN_DIR)/panda
 
 install: rakudo-install modules-install
 

@@ -1,6 +1,6 @@
 Rakudo Star -- a useful, usable, "early adopter" distribution of Perl 6
 
-Rakudo Star is an distribution of Perl 6 aimed at early adopters.
+Rakudo Star is a distribution of Perl 6 aimed at early adopters.
 This git repository isn't the distribution itself; the repository
 contains the tools and scripts used to create a distribution.
 
@@ -25,7 +25,7 @@ The build system assumes that you have the following tools available:
     * tar
     * touch
 
-See <http://wiki.github.com/rakudo/rakudo/whats-going-into-rakudo> for a list
+See <https://github.com/rakudo/rakudo/wiki/What's-going-into-Rakudo-*%3F> for a list
 of modules we want included in the distribution.
 
 The skel/ directory contains the basic layout of documentation and
